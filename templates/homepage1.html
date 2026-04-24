@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <!-- Logo Icon -->
+                        <i data-lucide="heart-pulse" class="w-10 h-10 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-800">Pharmacy Management System</h1>
+                        <p class="text-sm text-gray-500">Main Menu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content: Navigation Grid -->
+    <main>
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- 1. New Sales Bill -->
+                <a href="test2.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-5">
+                        <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">New Sale</h2>
+                    <p class="text-gray-600">Create a new sales bill for a customer.</p>
+                </a>
+
+                <!-- 2. Search Portal -->
+                <a href="customer_search1.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-5">
+                        <i data-lucide="search" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Search Portal</h2>
+                    <p class="text-gray-600">Find past sales by customer name or date.</p>
+                </a>
+                
+                <!-- 3. Analytics -->
+                <a href="b_analysis4.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-purple-100 text-purple-600 rounded-full mb-5">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Analytics Dashboard</h2>
+                    <p class="text-gray-600">View sales, inventory, and customer reports.</p>
+                </a>
+
+                <!-- 4. Stock Management -->
+                <a href="in_stock2.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full mb-5">
+                        <i data-lucide="package" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Stock Management</h2>
+                    <p class="text-gray-600">Add new inventory and view stock alerts.</p>
+                </a>
+
+                <!-- 5. Product Master -->
+                <a href="product2.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-gray-100 text-gray-600 rounded-full mb-5">
+                        <i data-lucide="clipboard-list" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Product Master</h2>
+                    <p class="text-gray-600">Add or edit products in your master catalog.</p>
+                </a>
+
+                <!-- 6. Wholesaler Management -->
+                <a href="wholesaler3.html" class="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full mb-5">
+                        <i data-lucide="truck" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Wholesalers</h2>
+                    <p class="text-gray-600">Manage suppliers and analyze profitability.</p>
+                </a>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

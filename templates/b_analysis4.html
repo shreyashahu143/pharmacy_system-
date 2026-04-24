@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+
+    <div class="container mx-auto max-w-7xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 border-b-4 border-blue-500 pb-2 mb-10 rounded">ANALYTICS DASHBOARD</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div id="btn-sales-analytics" class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer transform hover:-translate-y-1">
+                <div class="flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-5">
+                    <i data-lucide="trending-up" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sales & Profitability</h2>
+                <p class="text-gray-600">View reports on top sellers, revenue, and profit margins.</p>
+            </div>
+
+            <div id="btn-inventory-analytics" class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer transform hover:-translate-y-1">
+                <div class="flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-5">
+                    <i data-lucide="package" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Inventory Analytics</h2>
+                <p class="text-gray-600">View reports on slow-moving items and total inventory value.</p>
+            </div>
+
+            <div id="btn-customer-analytics" class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer transform hover:-translate-y-1">
+                <div class="flex items-center justify-center w-16 h-16 bg-purple-100 text-purple-600 rounded-full mb-5">
+                    <i data-lucide="users" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Customer & Payment</h2>
+                <p class="text-gray-600">View reports on top customers and pending payments.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-gray-900 bg-opacity-75 p-4" onclick="event.target === this && closeModal()">
+        <div id="modal-panel" class="bg-white rounded-lg shadow-xl w-full max-w-4xl m-4 transform scale-95 opacity-0 transition-all">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="modal-title" class="text-2xl font-semibold text-gray-800">Analytics</h3>
+                <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="modal-content" class="p-6 max-h-[70vh] overflow-y-auto">
+                <p class="text-gray-500 text-center">Loading data...</p>
+            </div>
+            
+            <div class="p-4 border-t border-gray-200 bg-gray-50 text-right rounded-b-lg">
+                <button id="modal-close-footer-btn" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM ELEMENTS ---
+        const modal = document.getElementById('modal');
+        const modalPanel = document.getElementById('modal-panel');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const closeBtn = document.getElementById('modal-close-btn');
+        const closeFooterBtn = document.getElementById('modal-close-footer-btn');
+
+        const btnSales = document.getElementById('btn-sales-analytics');
+        const btnInventory = document.getElementById('btn-inventory-analytics');
+        const btnCustomer = document.getElementById('btn-customer-analytics');
+
+        let currentChart = null; // To destroy old charts
+
+        // --- MODAL FUNCTIONS ---
+        function openModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-95', 'opacity-0');
+                modalPanel.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalPanel.classList.remove('scale-100', 'opacity-100');
+            modalPanel.classList.add('scale-95', 'opacity-0');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                if (currentChart) {
+                    currentChart.destroy();
+                    currentChart = null;
+                }
+            }, 300);
+        }
+        
+        closeBtn.addEventListener('click', closeModal);
+        closeFooterBtn.addEventListener('click', closeModal);
+
+        // --- HELPER FUNCTION ---
+        const formatCurrency = (value) => {
+            const num = parseFloat(value);
+            return isNaN(num) || num === null ? 'N/A' : `$${num.toFixed(2)}`;
+        };
+        
+        // --- API URL Base ---
+        const API_URL = 'http://127.0.0.1:5000/api/analytics';
+        
+        // --- HELPER to check for backend connection error ---
+        function getErrorMessage(error) {
+            if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+                return "CONNECTION ERROR: Failed to fetch data. Please ensure your Python backend server (app.py) is running on http://127.0.0.1:5000 and try again.";
+            } else if (error.message) {
+                 // This means the server *is* running, but crashed (a 500 error)
+                return `SERVER ERROR: ${error.message}. Please check your app.py terminal for the full SQL error log.`;
+            }
+            return "An unknown error occurred.";
+        }
+
+        // --- 1. SALES & PROFITABILITY FUNCTIONS ---
+
+        async function loadSalesAnalytics() {
+            modalTitle.textContent = 'Sales & Profitability';
+            modalContent.innerHTML = '<p class="text-center">Loading 4 reports...</p>';
+            openModal();
+
+            try {
+                const [resQty, resRev, resProfit, resTime] = await Promise.all([
+                    fetch(`${API_URL}/top-selling-qty`),
+                    fetch(`${API_URL}/top-selling-revenue`),
+                    fetch(`${API_URL}/most-profitable`),
+                    fetch(`${API_URL}/sales-over-time`)
+                ]);
+                
+                if (!resQty.ok) throw new Error(await resQty.json().then(e => e.message || 'Error fetching top quantity'));
+                if (!resRev.ok) throw new Error(await resRev.json().then(e => e.message || 'Error fetching top revenue'));
+                if (!resProfit.ok) throw new Error(await resProfit.json().then(e => e.message || 'Error fetching profitability'));
+                if (!resTime.ok) throw new Error(await resTime.json().then(e => e.message || 'Error fetching sales over time'));
+
+                const dataQty = await resQty.json();
+                const dataRev = await resRev.json();
+                const dataProfit = await resProfit.json();
+                const dataTime = await resTime.json();
+
+                modalContent.innerHTML = '';
+                modalContent.appendChild(renderSalesOverTime(dataTime));
+                modalContent.appendChild(renderMostProfitable(dataProfit));
+                modalContent.appendChild(renderTopSellingQty(dataQty));
+                modalContent.appendChild(renderTopSellingRevenue(dataRev));
+
+                if (currentChart) currentChart.destroy();
+                createSalesChart(dataTime);
+
+            } catch (error) {
+                console.error("Error loading sales analytics:", error);
+                modalContent.innerHTML = `<p class="text-center text-red-500">${getErrorMessage(error)}</p>`;
+            }
+        }
+        function renderTopSellingQty(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Top Selling (by Units)</h3>';
+            if (!data || data.length === 0) html += '<p class="text-gray-500">No sales data found.</p>';
+            else {
+                html += `<table class="min-w-full divide-y divide-gray-200 border rounded-lg"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Units Sold</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    html += `<tr><td class="px-4 py-3 text-sm font-medium text-gray-900">${item.product_name}</td><td class="px-4 py-3 text-sm font-bold text-gray-700">${item.total_units_sold}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        function renderTopSellingRevenue(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Top Selling (by Revenue)</h3>';
+            if (!data || data.length === 0) html += '<p class="text-gray-500">No sales data found.</p>';
+            else {
+                html += `<table class="min-w-full divide-y divide-gray-200 border rounded-lg"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Revenue</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    html += `<tr><td class="px-4 py-3 text-sm font-medium text-gray-900">${item.product_name}</td><td class="px-4 py-3 text-sm font-bold text-green-600">${formatCurrency(item.total_revenue)}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        function renderMostProfitable(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Most Profitable Products</h3>';
+            if (!data || data.length === 0) html += '<p class="text-gray-500">No profit data found. (Make sure stock has purchase prices)</p>';
+            else {
+                html += `<table class="min-w-full divide-y divide-gray-200 border rounded-lg"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Avg Cost</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sale Price</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Units Sold</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Profit</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    html += `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm font-medium text-gray-900">${item.product_name}</td><td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(item.purchase_cost)}</td><td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(item.sale_price)}</td><td class="px-4 py-3 text-sm text-gray-700">${item.total_units_sold}</td><td class="px-4 py-3 text-sm font-bold text-green-600">${formatCurrency(item.total_profit)}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        function renderSalesOverTime(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Sales Over Time (Last 30 Days)</h3>';
+            if (!data || data.length === 0) html += '<p class="text-gray-500">No sales data found for the last 30 days.</p>';
+            else html += '<canvas id="salesChart" width="400" height="200"></canvas>';
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        function createSalesChart(data) {
+            if (!data || data.length === 0) return; 
+            const labels = data.map(item => item.date);
+            const revenue = data.map(item => item.total_revenue);
+            const ctx = document.getElementById('salesChart');
+            if (!ctx) return; 
+            currentChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Revenue', data: revenue,
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true, tension: 0.1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // --- 2. INVENTORY ANALYTICS FUNCTIONS ---
+
+        async function loadInventoryAnalytics() {
+            modalTitle.textContent = 'Inventory Analytics';
+            modalContent.innerHTML = '<p class="text-center">Loading 2 reports...</p>';
+            openModal();
+
+            try {
+                const [resValue, resSlow] = await Promise.all([
+                    fetch(`${API_URL}/inventory-value`),
+                    fetch(`${API_URL}/slow-moving`)
+                ]);
+
+                if (!resValue.ok) throw new Error(await resValue.json().then(e => e.message || 'Error fetching inventory value'));
+                if (!resSlow.ok) throw new Error(await resSlow.json().then(e => e.message || 'Error fetching slow-moving stock'));
+
+                const dataValue = await resValue.json();
+                const dataSlow = await resSlow.json();
+
+                modalContent.innerHTML = ''; // Clear loading
+                
+                modalContent.appendChild(renderInventoryValue(dataValue));
+                modalContent.appendChild(renderSlowMoving(dataSlow));
+                
+            } catch (error) {
+                console.error("Error loading inventory analytics:", error);
+                modalContent.innerHTML = `<p class="text-center text-red-500">${getErrorMessage(error)}</p>`;
+            }
+        }
+        
+        function renderInventoryValue(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8 text-center bg-gray-50 p-6 rounded-lg';
+            let html = '<h3 class="text-xl font-semibold mb-2 text-gray-700">Total Inventory Value</h3>';
+            html += `<p class="text-5xl font-bold text-gray-800">${formatCurrency(data.total_value)}</p>`;
+            html += '<p class="text-sm text-gray-500 mt-1">(Based on current stock & purchase price)</p>';
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+
+        function renderSlowMoving(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Slow-Moving Stock (No Sales in 90 Days)</h3>';
+            if (!data || data.length === 0) {
+                html += '<p class="text-gray-500">No slow-moving items found!</p>';
+            } else {
+                html += `
+                    <table class="min-w-full divide-y divide-gray-200 border rounded-lg">
+                        <thead class="bg-gray-50"><tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Sold Date</th>
+                        </tr></thead><tbody class="bg-white divide-y divide-gray-200">
+                `;
+                data.forEach(item => {
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.product_name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.last_sold_date}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+
+        // --- 3. CUSTOMER & PAYMENT FUNCTIONS ---
+
+        async function loadCustomerAnalytics() {
+            modalTitle.textContent = 'Customer & Payment Analytics';
+            modalContent.innerHTML = '<p class="text-center">Loading 3 reports...</p>';
+            openModal();
+
+            try {
+                // Fetch all 3 reports in parallel
+                const [resTotal, resList, resTop] = await Promise.all([
+                    fetch(`${API_URL}/pending-total`),
+                    fetch(`${API_URL}/pending-list`),
+                    fetch(`${API_URL}/top-customers`)
+                ]);
+
+                if (!resTotal.ok) throw new Error(await resTotal.json().then(e => e.message || 'Error fetching pending total'));
+                if (!resList.ok) throw new Error(await resList.json().then(e => e.message || 'Error fetching pending list'));
+                if (!resTop.ok) throw new Error(await resTop.json().then(e => e.message || 'Error fetching top customers'));
+
+                const dataTotal = await resTotal.json();
+                const dataList = await resList.json();
+                const dataTop = await resTop.json();
+
+                modalContent.innerHTML = ''; // Clear loading
+                
+                // Render reports
+                modalContent.appendChild(renderPendingTotal(dataTotal));
+                modalContent.appendChild(renderPendingList(dataList));
+                modalContent.appendChild(renderTopCustomers(dataTop));
+                
+            } catch (error) {
+                console.error("Error loading customer analytics:", error);
+                modalContent.innerHTML = `<p class="text-center text-red-500">${getErrorMessage(error)}</p>`;
+            }
+        }
+
+        function renderPendingTotal(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8 text-center bg-red-50 p-6 rounded-lg';
+            let html = '<h3 class="text-xl font-semibold mb-2 text-red-700">Total Pending Balance</h3>';
+            html += `<p class="text-5xl font-bold text-red-600">${formatCurrency(data.total_pending)}</p>`;
+            html += '<p class="text-sm text-gray-500 mt-1">(Total amount owed to you from all customers)</p>';
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+
+        function renderPendingList(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Pending Balance Details</h3>';
+            if (!data || data.length === 0) {
+                html += '<p class="text-gray-500">No pending balances found!</p>';
+            } else {
+                html += `
+                    <table class="min-w-full divide-y divide-gray-200 border rounded-lg">
+                        <thead class="bg-gray-50"><tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bill #</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sale Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Balance Owed</th>
+                        </tr></thead><tbody class="bg-white divide-y divide-gray-200">
+                `;
+                data.forEach(item => {
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.bill_number}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.sales_date}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.due_date}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.customer_name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.phone_number}</td>
+                            <td class="px-4 py-3 text-sm font-bold text-red-600">${formatCurrency(item.balance_amount)}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        
+        function renderTopCustomers(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-8';
+            let html = '<h3 class="text-xl font-semibold mb-3 text-gray-700">Top 10 Customers (by Total Spent)</h3>';
+            if (!data || data.length === 0) {
+                html += '<p class="text-gray-500">No customer sales data found.</p>';
+            } else {
+                html += `
+                    <table class="min-w-full divide-y divide-gray-200 border rounded-lg">
+                        <thead class="bg-gray-50"><tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Spent</th>
+                        </tr></thead><tbody class="bg-white divide-y divide-gray-200">
+                `;
+                data.forEach(item => {
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.customer_name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${item.phone_number}</td>
+                            <td class="px-4 py-3 text-sm font-bold text-purple-600">${formatCurrency(item.total_spent)}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+            }
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+
+
+        // --- ATTACH LISTENERS ---
+        
+        btnSales.addEventListener('click', loadSalesAnalytics);
+        btnInventory.addEventListener('click', loadInventoryAnalytics);
+        btnCustomer.addEventListener('click', loadCustomerAnalytics);
+        
+        lucide.createIcons();
+    });
+</script>
+</body>
+</html>

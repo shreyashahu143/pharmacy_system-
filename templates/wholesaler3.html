@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wholesaler Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .table-container { max-height: 70vh; overflow-y: auto; }
+        .table-container thead { position: sticky; top: 0; z-index: 10; }
+        input:focus, select:focus {
+            outline: 2px solid transparent; outline-offset: 2px;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans p-4 md:p-8">
+
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold text-center text-purple-700 border-b-4 border-purple-500 pb-2 mb-8 rounded">WHOLESALER MANAGEMENT & ANALYSIS</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Add New Wholesaler</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6 space-y-4">
+                    <div>
+                        <label for="wh-name" class="block text-sm font-medium text-gray-700">Wholesaler Name</label>
+                        <input type="text" id="wh-name" placeholder="Enter name" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="wh-phone" class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                        <input type="tel" id="wh-phone" placeholder="Enter mobile number" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="wh-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="wh-email" placeholder="Enter email" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="wh-address" class="block text-sm font-medium text-gray-700">Address</label>
+                        <textarea id="wh-address" rows="3" placeholder="Enter address" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    </div>
+                    <div>
+                        <label for="wh-taxid" class="block text-sm font-medium text-gray-700">Tax ID / GSTIN</label>
+                        <input type="text" id="wh-taxid" placeholder="Enter Tax ID" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="wh-license" class="block text-sm font-medium text-gray-700">Drug License</label>
+                        <input type="text" id="wh-license" placeholder="Enter Drug License No." class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    
+                    <button id="add-wholesaler-btn" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition duration-200 shadow-md">
+                        ADD WHOLESALER
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Current Wholesaler List</h2>
+                <div class="table-container bg-white rounded-xl shadow-lg overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-50">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Name</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Phone</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Address</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Tax ID</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Drug License</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wholesalerListBody" class="bg-white divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                    <div id="wholesalerEmptyMessage" class="p-6 text-center text-gray-500">No wholesalers added yet.</div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Profitability Comparison</h2>
+                
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+                    <label for="product-search-input" class="block text-sm font-medium text-gray-700">Search Product Name</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="product-search-input" placeholder="e.g., Paracetamol" class="flex-1 p-2 border border-gray-300 rounded-md shadow-sm">
+                        <button id="run-analysis-btn" class="px-6 py-2 bg-purple-600 text-white font-bold rounded-md shadow-sm hover:bg-purple-700 transition">
+                            Analyze
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container bg-white rounded-xl shadow-lg overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-50">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Wholesaler</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Sale Price</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Avg. Purchase Price</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">Profit Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analysisListBody" class="bg-white divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                    <div id="analysisEmptyMessage" class="p-6 text-center text-gray-500">Search for a product to compare.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="customModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Status</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p id="modalMessage" class="text-sm text-gray-500"></p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="modalClose" class="px-4 py-2 bg-purple-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-purple-600">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM ELEMENTS ---
+        const addWholesalerBtn = document.getElementById('add-wholesaler-btn');
+        const modal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalClose = document.getElementById('modalClose');
+        
+        const analysisListBody = document.getElementById('analysisListBody');
+        const analysisEmptyMessage = document.getElementById('analysisEmptyMessage');
+        const productSearchInput = document.getElementById('product-search-input');
+        const runAnalysisBtn = document.getElementById('run-analysis-btn');
+
+        const wholesalerListBody = document.getElementById('wholesalerListBody');
+        const wholesalerEmptyMessage = document.getElementById('wholesalerEmptyMessage');
+
+
+        // --- MODAL/ALERT ---
+        function customAlert(message) {
+            modalMessage.innerText = message;
+            modal.classList.remove('hidden');
+        }
+        modalClose.onclick = () => modal.classList.add('hidden');
+
+        // --- FORMATTING ---
+        const formatCurrency = (value) => {
+            const num = parseFloat(value);
+            return isNaN(num) || num === null ? 'N/A' : `$${num.toFixed(2)}`;
+        };
+
+        // --- RENDER ANALYSIS TABLE ---
+        function renderAnalysis(analysisData) {
+            analysisListBody.innerHTML = ''; 
+
+            if (analysisData.length === 0) {
+                analysisEmptyMessage.classList.remove('hidden');
+                analysisEmptyMessage.textContent = `No purchase history found for this product.`;
+                return;
+            }
+            analysisEmptyMessage.classList.add('hidden');
+            
+            let isBestDeal = true; 
+            analysisData.forEach(item => {
+                const row = analysisListBody.insertRow();
+                row.className = isBestDeal ? 'bg-green-50' : 'hover:bg-gray-50';
+                const profitText = isBestDeal ? `⭐ ${formatCurrency(item.profit_margin)}` : formatCurrency(item.profit_margin);
+
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.wholesaler_name}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${formatCurrency(item.sale_price)}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${formatCurrency(item.avg_purchase_price)}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm font-bold ${isBestDeal ? 'text-green-700' : 'text-gray-900'}">${profitText}</div>`;
+                
+                isBestDeal = false;
+            });
+        }
+        
+        // --- RENDER WHOLESALER LIST ---
+        function renderWholesalerList(wholesalers) {
+            wholesalerListBody.innerHTML = ''; 
+
+            if (wholesalers.length === 0) {
+                wholesalerEmptyMessage.classList.remove('hidden');
+                return;
+            }
+            wholesalerEmptyMessage.classList.add('hidden');
+            
+            // ****** UPDATED to show new columns ******
+            wholesalers.forEach(wh => {
+                const row = wholesalerListBody.insertRow();
+                row.className = 'hover:bg-gray-50';
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${wh.wholesaler_name}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${wh.mobile_number || 'N/A'}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${wh.address || 'N/A'}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${wh.tax_id || 'N/A'}</div>`;
+                row.insertCell().innerHTML = `<div class="px-3 py-3 whitespace-nowrap text-sm text-gray-700">${wh.drug_license || 'N/A'}</div>`;
+            });
+        }
+
+        // --- ADD NEW WHOLESALER (uses FETCH) ---
+        async function handleAddWholesaler(e) {
+            e.preventDefault();
+            
+            const wholesalerData = {
+                name: document.getElementById('wh-name').value,
+                mobile_number: document.getElementById('wh-phone').value,
+                email: document.getElementById('wh-email').value,
+                address: document.getElementById('wh-address').value,
+                tax_id: document.getElementById('wh-taxid').value,
+                drug_license: document.getElementById('wh-license').value
+            };
+
+            if (!wholesalerData.name || !wholesalerData.mobile_number) {
+                customAlert("Validation Error: Please fill in at least Name and Mobile Number.");
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/wholesalers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(wholesalerData)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Server error');
+                
+                customAlert(`✅ ${result.message}`);
+                
+                document.getElementById('wh-name').value = '';
+                document.getElementById('wh-phone').value = '';
+                document.getElementById('wh-email').value = '';
+                document.getElementById('wh-address').value = '';
+                document.getElementById('wh-taxid').value = '';
+                document.getElementById('wh-license').value = '';
+
+                await loadWholesalers(); // Refresh the wholesaler list
+
+            } catch (error) {
+                console.error("Error saving wholesaler:", error);
+                customAlert(`Error: Could not save wholesaler. ${error.message}`);
+            }
+        }
+        
+        // --- CORE ANALYSIS FUNCTION (Search) ---
+        async function loadSingleProductAnalysis() {
+            const productName = productSearchInput.value.trim();
+            if (!productName) {
+                customAlert("Please enter a product name to analyze.");
+                return;
+            }
+
+            analysisListBody.innerHTML = '';
+            analysisEmptyMessage.classList.remove('hidden');
+            analysisEmptyMessage.textContent = 'Searching...';
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/wholesalers/analysis/${productName}`);
+                
+                if (response.status === 404) {
+                    analysisEmptyMessage.textContent = `No purchase history found for "${productName}".`;
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Server returned an error.');
+                }
+                
+                const data = await response.json();
+                renderAnalysis(data); // Render the best deals
+                
+            } catch (error) {
+                console.error("Error loading analysis:", error);
+                analysisEmptyMessage.textContent = `Error: ${error.message}. Check the console.`;
+            }
+        }
+
+        // --- LOAD WHOLESALERS LIST ---
+        async function loadWholesalers() {
+            wholesalerListBody.innerHTML = '';
+            wholesalerEmptyMessage.classList.remove('hidden');
+            wholesalerEmptyMessage.textContent = 'Loading...';
+            
+            try {
+                // This URL must match your (renamed) app.py route
+                const response = await fetch('http://127.0.0.1:5000/api/wholesalers/list'); 
+                if (!response.ok) throw new Error('Could not fetch wholesaler list');
+                
+                const data = await response.json();
+                renderWholesalerList(data);
+                
+            } catch (error) {
+                console.error("Error loading wholesalers:", error);
+                wholesalerEmptyMessage.textContent = 'Error loading list.';
+            }
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Attach button listeners
+            addWholesalerBtn.addEventListener('click', handleAddWholesaler);
+            runAnalysisBtn.addEventListener('click', loadSingleProductAnalysis);
+            
+            // Load the wholesaler list on page load
+            await loadWholesalers();
+        });
+    </script>
+</body>
+</html>
